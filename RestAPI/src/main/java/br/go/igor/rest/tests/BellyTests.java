@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import br.go.igor.rest.core.BaseTest;
 
+
+
 public class BellyTests extends BaseTest {
 	
 	private String TOKEN;
@@ -68,6 +70,46 @@ public class BellyTests extends BaseTest {
 		;
 	
 	}
+	
+	@Test
+	public void shouldntInsertAccountWithSameData() {
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+	       .body("{\"nome\": \"conta qualquer igor 688\"}")
+		.when()
+		   .post("/contas")
+		.then()
+		  .statusCode(400)
+		  //.body("error", is("Já exite uma conta com esse nome!"));
+		    ;
+	}
+	
+	 @Test
+		public void shouldInsertSuccesfullTransactions() {
+		 Transactions tran = new Transactions();
+		 tran.setAccount_id(17585);
+		 //tran.setUser_id(user_id);
+		 tran.setDescription("Description Transaction");
+		 tran.setInvolved("Envolved Trasaction");
+		 tran.setType("REC");
+		 tran.setTransaction_date("01/01/2020");
+		 tran.setPayment_date("10/06/2020");
+		 tran.setValue(100f);
+		 tran.setStatus(true);
+		 
+		 
+		 
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+	       .body(tran)
+		.when()
+		   .put("/transacoes")
+		.then()
+		   .statusCode(201)
+		;
+	
+	}
+	
 	
 	
 }
