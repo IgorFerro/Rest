@@ -98,7 +98,6 @@ public class BellyTests extends BaseTest {
 		 tran.setStatus(true);
 		 
 		 
-		 
 	     given()
 	       .header("Authorization", "JWT" + TOKEN)
 	       .body(tran)
