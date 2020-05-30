@@ -1,6 +1,5 @@
 package br.go.igor.rest.core;
 
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
 

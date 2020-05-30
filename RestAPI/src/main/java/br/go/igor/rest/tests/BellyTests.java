@@ -1,12 +1,20 @@
 package br.go.igor.rest.tests;
 
+import org.hamcrest.Matchers;
+
 import static io.restassured.RestAssured.given;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.*;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.*;
+
 
 import br.go.igor.rest.core.BaseTest;
 
@@ -14,12 +22,12 @@ import br.go.igor.rest.core.BaseTest;
 
 public class BellyTests extends BaseTest {
 	
-	private String TOKEN;
+	public static String TOKEN;
 	
 	@Before
 	public void login() {
 		Map<String, String> login = new HashMap<>();
-		login.put("email", "wertyui@gmail.com");
+		login.put("email", "werttest345@gmail.com");
 		login.put("senha", "123456");
 		
 		
@@ -38,7 +46,7 @@ public class BellyTests extends BaseTest {
 	public void shouldntAcessAPIWithoutToken() {
 		given()
 		.when()
-		   .get("/contas")
+		   .get("/addconta")
 		.then()
 		   .statusCode(401)
 		;
@@ -49,7 +57,7 @@ public class BellyTests extends BaseTest {
 	public void shouldInsertSuccesAccount() {
 	     given()
 	       .header("Authorization", "JWT" + TOKEN)
-	       .body("{\"nome\": \"conta qualquer igor 666\"}")
+	       .body("{\"nome\": \"conta qualquer igor 66699\"}")
 		.when()
 		   .post("/contas")
 		.then()
@@ -97,7 +105,6 @@ public class BellyTests extends BaseTest {
 		 tran.setValue(100f);
 		 tran.setStatus(true);
 		 
-		 
 	     given()
 	       .header("Authorization", "JWT" + TOKEN)
 	       .body(tran)
@@ -106,8 +113,32 @@ public class BellyTests extends BaseTest {
 		.then()
 		   .statusCode(201)
 		;
-	
 	}
+	 
+	 @Test
+		public void shouldCheckMandatoryFielsTransactions() { 
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+	       .body("{}")
+		.when()
+		   .put("/transacoes")
+		.then()
+		   .statusCode(400)
+		   .body("$", hasSize(8))
+		   .body("msg", hasItems(
+				   "Data da Movimentação é obrigatório",
+				   "Data do pagamento é obrigatório",
+				   "Descrição é obrigatório",
+				   "Interessado é obrigatório",
+				   "Valor é obrigatório",
+				   "Valor deve ser um número"
+				   
+				   ))
+		;
+	}
+	 
+	 
+	
 	
 	
 	
