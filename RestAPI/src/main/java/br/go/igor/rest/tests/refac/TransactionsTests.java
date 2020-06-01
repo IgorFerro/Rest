@@ -1,37 +1,20 @@
-package br.go.igor.rest.tests;
-
-import org.hamcrest.Matchers;
+package br.go.igor.rest.tests.refac;
 
 import static io.restassured.RestAssured.given;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.is;
-
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
-import org.junit.*;
-
 
 import br.go.igor.rest.core.BaseTest;
+import br.go.igor.rest.tests.Transactions;
 import br.go.igor.utils.DataUtils;
 import io.restassured.RestAssured;
-import io.restassured.specification.FilterableRequestSpecification;
 
-
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class BellyTests extends BaseTest {
-	
-	
-	private static String CONTA_NAME = "Conta " + System.nanoTime();
-	private static Integer CONTA_ID;
-	private static Integer MOV_ID;
+public class TransactionsTests extends BaseTest {
 	
 	@BeforeClass
 	public static void login() {
@@ -50,64 +33,25 @@ public class BellyTests extends BaseTest {
 	 
 	 RestAssured.requestSpecification.header("Authorization", "JWT" + TOKEN);
 	 
-	}
-	
-	
-	@Test
-	public void t02_shouldInsertSuccesAccount() {
-	    CONTA_ID = given()
-	       .body("{\"nome\": \""+CONTA_NAME+"\"}")
-		.when()
-		   .post("/contas")
-		.then()
-		   .statusCode(201)
-		   .extract().path("id")
-		;
-	
-	}
-	
-	@Test
-	public void t03_shouldChangeDataAccount() {
-	     given()
-	       .body("{\"nome\": \""+CONTA_NAME+" alterada\"}")
-	       .pathParam("id", CONTA_ID )
-		.when()
-		   .put("/contas/{id}")
-		.then()
-		   .statusCode(200)
-		   .body("nome", is(CONTA_NAME+ "alterada"));
-		;
-	
-	}
-	
-	@Test
-	public void t04_shouldntInsertAccountWithSameData() {
-	     given()
-	       .body("{\"nome\": \""+CONTA_NAME+" alterada\"}")
-		.when()
-		   .post("/contas")
-		.then()
-		  .statusCode(400)
-		  //.body("error", is("Já exite uma conta com esse nome!"));
-		    ;
+	 RestAssured.get("/reset").then().statusCode(200);
+	 
 	}
 	
 	 @Test
-		public void t05_shouldInsertSuccesfullTransactions() {
+		public void  shouldInsertSuccesfullTransactions() {
 		 Transactions tran = getValidTransaction();
 		 
-		 MOV_ID = given()
+		    given()
 	       .body(tran)
 		.when()
 		   .put("/transacoes")
 		.then()
 		   .statusCode(201)
-		   .extract().path("id")
 		;
 	}
 	 
 	 @Test
-		public void t06_shouldCheckMandatoryFielsTransactions() { 
+		public void shouldCheckMandatoryFielsTransactions() { 
 	     given()
 	       .body("{}")
 		.when()
@@ -125,7 +69,7 @@ public class BellyTests extends BaseTest {
 	}
 	 
 	 @Test
-		public void t07_shouldInsertSuccesfullTransactionsWithoutFutereDate() {
+		public void shouldInsertSuccesfullTransactionsWithoutFutereDate() {
 		 Transactions tran = getValidTransaction();
 		 tran.setTransaction_date(DataUtils.getDataDiferencaDias(2));
 		 
@@ -142,7 +86,9 @@ public class BellyTests extends BaseTest {
 	 
 	 
 	 @Test
-		public void t08_shouldNotRemoceAccountWithTransactions() {
+		public void shouldNotRemoceAccountWithTransactions() {
+		 Integer CONTA_ID = getIdAccountByName("Conta com movimentacao");
+		 
 	     given()
 	       .pathParam("id", CONTA_ID)
 		.when()
@@ -154,19 +100,11 @@ public class BellyTests extends BaseTest {
 	}
 	 
 	 @Test
-		public void t09_shouldCalculateAccountBalance() {
-	     given()
-		.when()
-		   .get("/saldo")
-		.then()
-		   .statusCode(200)
-		   .body("find{it.conta_id == "+CONTA_ID+"}.saldo", is("100.00"))
-		;
-	}
-	 
-	 @Test
-		public void t10_shouldRemoveAccountTransaction() {
-	     given()
+		public void shouldRemoveAccountTransaction() {
+	     
+		 Integer MOV_ID = getIdTransactionByDescription("Movimentacao para exclusao");
+		 
+		 given()
 	       .pathParam("id", MOV_ID)
 		.when()
 		   .delete("/transacoes/{id}")
@@ -175,24 +113,19 @@ public class BellyTests extends BaseTest {
 		   
 		;
 	}
-	 
-		@Test
-		public void t01_shouldntAcessAPIWithoutToken() {
-			FilterableRequestSpecification req = (FilterableRequestSpecification) RestAssured.requestSpecification;
-			req.removeHeader("Authorization");
-			
-			given()
-			.when()
-			   .get("/addconta")
-			.then()
-			   .statusCode(401)
-			;
-			
-		}
-	 
+	
+	public Integer getIdAccountByName(String name) {
+		return RestAssured.get("/contas?nome"+name).then().extract().path("id[0]");
+	}
+	
+	public Integer getIdTransactionByDescription(String desc) {
+		return RestAssured.get("/transacoes?descricao"+desc).then().extract().path("id[0]");
+	}
+	
+	
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
-		 tran.setAccount_id(CONTA_ID);
+		 tran.setAccount_id(getIdAccountByName("Conta para movimentacoes"));
 		 //tran.setUser_id(user_id);
 		 tran.setDescription("Description Transaction");
 		 tran.setInvolved("Envolved Trasaction");
@@ -204,9 +137,5 @@ public class BellyTests extends BaseTest {
 		 return tran;
 	 }
 	 
-	 
-	
-	
-	
-	
+
 }
