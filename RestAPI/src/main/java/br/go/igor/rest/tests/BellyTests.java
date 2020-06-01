@@ -5,7 +5,10 @@ import org.hamcrest.Matchers;
 import static io.restassured.RestAssured.given;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 
 import java.util.HashMap;
@@ -94,16 +97,7 @@ public class BellyTests extends BaseTest {
 	
 	 @Test
 		public void shouldInsertSuccesfullTransactions() {
-		 Transactions tran = new Transactions();
-		 tran.setAccount_id(17585);
-		 //tran.setUser_id(user_id);
-		 tran.setDescription("Description Transaction");
-		 tran.setInvolved("Envolved Trasaction");
-		 tran.setType("REC");
-		 tran.setTransaction_date("01/01/2020");
-		 tran.setPayment_date("10/06/2020");
-		 tran.setValue(100f);
-		 tran.setStatus(true);
+		 Transactions tran = getValidTransaction();
 		 
 	     given()
 	       .header("Authorization", "JWT" + TOKEN)
@@ -125,17 +119,45 @@ public class BellyTests extends BaseTest {
 		.then()
 		   .statusCode(400)
 		   .body("$", hasSize(8))
-		   .body("msg", hasItems(
-				   "Data da Movimentação é obrigatório",
+		   .body("msg", hasItems("Data da Movimentação é obrigatório",
 				   "Data do pagamento é obrigatório",
 				   "Descrição é obrigatório",
 				   "Interessado é obrigatório",
 				   "Valor é obrigatório",
-				   "Valor deve ser um número"
-				   
-				   ))
+				   "Valor deve ser um número"))
 		;
 	}
+	 
+	 @Test
+		public void shouldInsertSuccesfullTransactionsWithoutFutereDate() {
+		 Transactions tran = getValidTransaction();
+		 tran.setTransaction_date("31/1/2019");
+		 
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+	       .body(tran)
+		.when()
+		   .put("/transacoes")
+		.then()
+		   .statusCode(400)
+		   .body("$", hasSize(1))
+		   .body("msg", hasItem("Data da Movimentação deve ser menor ou igual à data atual"))
+		;
+	}
+	 
+	 private Transactions getValidTransaction() {
+		 Transactions tran = new Transactions();
+		 tran.setAccount_id(17585);
+		 //tran.setUser_id(user_id);
+		 tran.setDescription("Description Transaction");
+		 tran.setInvolved("Envolved Trasaction");
+		 tran.setType("REC");
+		 tran.setTransaction_date("01/01/2020");
+		 tran.setPayment_date("10/06/2020");
+		 tran.setValue(100f);
+		 tran.setStatus(true);
+		 return tran;
+	 }
 	 
 	 
 	
