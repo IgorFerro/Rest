@@ -2,39 +2,14 @@ package br.go.igor.rest.tests.refac;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import br.go.igor.rest.core.BaseTest;
-import io.restassured.RestAssured;
+import br.go.igor.utils.BellyUtils;
+
 
 public class AccountsTests extends BaseTest {
-	
-	@BeforeClass
-	public static void login() {
-		Map<String, String> login = new HashMap<>();
-		login.put("email", "werttest345@gmail.com");
-		login.put("senha", "123456");
 		
-		
-	String TOKEN = given()
-		    .body(login)
-		.when()
-		   .post("/signin")
-		.then()
-		   .statusCode(200)
-		   .extract().path("token");
-	 
-	 RestAssured.requestSpecification.header("Authorization", "JWT" + TOKEN);
-	 
-	 RestAssured.get("/reset").then().statusCode(200);
-	 
-	}
-	
 	@Test
 	public void shouldInsertSuccesAccount() {
 	        given()
@@ -50,7 +25,7 @@ public class AccountsTests extends BaseTest {
 	
 	@Test
 	public void shouldChangeDataAccount() {
-		Integer CONTA_ID = getIdAccountByName("Conta para alterar");
+		Integer CONTA_ID = BellyUtils.getIdAccountByName("Conta para alterar");
 		
 	     given()
 	       .body("{\"nome\": \"Conta alterada\"}")
@@ -76,8 +51,4 @@ public class AccountsTests extends BaseTest {
 		    ;
 	}
 	
-	public Integer getIdAccountByName(String name) {
-		return RestAssured.get("/contas?nome"+name).then().extract().path("id[0]");
-	}
-
 }

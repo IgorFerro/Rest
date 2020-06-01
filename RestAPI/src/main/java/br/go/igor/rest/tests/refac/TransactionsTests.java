@@ -1,41 +1,20 @@
 package br.go.igor.rest.tests.refac;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import br.go.igor.rest.core.BaseTest;
 import br.go.igor.rest.tests.Transactions;
+import br.go.igor.utils.BellyUtils;
 import br.go.igor.utils.DataUtils;
 import io.restassured.RestAssured;
 
 public class TransactionsTests extends BaseTest {
-	
-	@BeforeClass
-	public static void login() {
-		Map<String, String> login = new HashMap<>();
-		login.put("email", "werttest345@gmail.com");
-		login.put("senha", "123456");
-		
-		
-	String TOKEN = given()
-		    .body(login)
-		.when()
-		   .post("/signin")
-		.then()
-		   .statusCode(200)
-		   .extract().path("token");
-	 
-	 RestAssured.requestSpecification.header("Authorization", "JWT" + TOKEN);
-	 
-	 RestAssured.get("/reset").then().statusCode(200);
-	 
-	}
 	
 	 @Test
 		public void  shouldInsertSuccesfullTransactions() {
@@ -87,7 +66,7 @@ public class TransactionsTests extends BaseTest {
 	 
 	 @Test
 		public void shouldNotRemoceAccountWithTransactions() {
-		 Integer CONTA_ID = getIdAccountByName("Conta com movimentacao");
+		 Integer CONTA_ID = BellyUtils.getIdAccountByName("Conta com movimentacao");
 		 
 	     given()
 	       .pathParam("id", CONTA_ID)
@@ -114,9 +93,6 @@ public class TransactionsTests extends BaseTest {
 		;
 	}
 	
-	public Integer getIdAccountByName(String name) {
-		return RestAssured.get("/contas?nome"+name).then().extract().path("id[0]");
-	}
 	
 	public Integer getIdTransactionByDescription(String desc) {
 		return RestAssured.get("/transacoes?descricao"+desc).then().extract().path("id[0]");
@@ -125,7 +101,7 @@ public class TransactionsTests extends BaseTest {
 	
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
-		 tran.setAccount_id(getIdAccountByName("Conta para movimentacoes"));
+		 tran.setAccount_id(BellyUtils.getIdAccountByName("Conta para movimentacoes"));
 		 //tran.setUser_id(user_id);
 		 tran.setDescription("Description Transaction");
 		 tran.setInvolved("Envolved Trasaction");
