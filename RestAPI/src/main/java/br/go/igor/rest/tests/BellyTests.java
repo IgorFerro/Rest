@@ -16,25 +16,32 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.junit.*;
 
 
 import br.go.igor.rest.core.BaseTest;
+import br.go.igor.utils.DataUtils;
+import io.restassured.RestAssured;
+import io.restassured.specification.FilterableRequestSpecification;
 
 
-
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BellyTests extends BaseTest {
 	
-	public static String TOKEN;
 	
-	@Before
-	public void login() {
+	private static String CONTA_NAME = "Conta " + System.nanoTime();
+	private static Integer CONTA_ID;
+	private static Integer MOV_ID;
+	
+	@BeforeClass
+	public static void login() {
 		Map<String, String> login = new HashMap<>();
 		login.put("email", "werttest345@gmail.com");
 		login.put("senha", "123456");
 		
 		
-	 TOKEN = given()
+	String TOKEN = given()
 		    .body(login)
 		.when()
 		   .post("/signin")
@@ -42,51 +49,42 @@ public class BellyTests extends BaseTest {
 		   .statusCode(200)
 		   .extract().path("token");
 	 
+	 RestAssured.requestSpecification.header("Authorization", "JWT" + TOKEN);
+	 
 	}
 	
 	
 	@Test
-	public void shouldntAcessAPIWithoutToken() {
-		given()
-		.when()
-		   .get("/addconta")
-		.then()
-		   .statusCode(401)
-		;
-		
-	}
-	
-	@Test
-	public void shouldInsertSuccesAccount() {
-	     given()
-	       .header("Authorization", "JWT" + TOKEN)
-	       .body("{\"nome\": \"conta qualquer igor 66699\"}")
+	public void t02_shouldInsertSuccesAccount() {
+	    CONTA_ID = given()
+	       .body("{\"nome\": \""+CONTA_NAME+"\"}")
 		.when()
 		   .post("/contas")
 		.then()
 		   .statusCode(201)
+		   .extract().path("id")
 		;
 	
 	}
 	
 	@Test
-	public void shouldChangeDataAccount() {
+	public void t03_shouldChangeDataAccount() {
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
-	       .body("{\"nome\": \"conta qualquer igor 688\"}")
+	       .body("{\"nome\": \""+CONTA_NAME+" alterada\"}")
+	       .pathParam("id", CONTA_ID )
 		.when()
-		   .put("/contas/17585")
+		   .put("/contas/{id}")
 		.then()
 		   .statusCode(200)
+		   .body("nome", is(CONTA_NAME+ "alterada"));
 		;
 	
 	}
 	
 	@Test
-	public void shouldntInsertAccountWithSameData() {
+	public void t04_shouldntInsertAccountWithSameData() {
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
-	       .body("{\"nome\": \"conta qualquer igor 688\"}")
+	       .body("{\"nome\": \""+CONTA_NAME+" alterada\"}")
 		.when()
 		   .post("/contas")
 		.then()
@@ -96,23 +94,22 @@ public class BellyTests extends BaseTest {
 	}
 	
 	 @Test
-		public void shouldInsertSuccesfullTransactions() {
+		public void t05_shouldInsertSuccesfullTransactions() {
 		 Transactions tran = getValidTransaction();
 		 
-	     given()
-	       .header("Authorization", "JWT" + TOKEN)
+		 MOV_ID = given()
 	       .body(tran)
 		.when()
 		   .put("/transacoes")
 		.then()
 		   .statusCode(201)
+		   .extract().path("id")
 		;
 	}
 	 
 	 @Test
-		public void shouldCheckMandatoryFielsTransactions() { 
+		public void t06_shouldCheckMandatoryFielsTransactions() { 
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
 	       .body("{}")
 		.when()
 		   .put("/transacoes")
@@ -129,12 +126,11 @@ public class BellyTests extends BaseTest {
 	}
 	 
 	 @Test
-		public void shouldInsertSuccesfullTransactionsWithoutFutereDate() {
+		public void t07_shouldInsertSuccesfullTransactionsWithoutFutereDate() {
 		 Transactions tran = getValidTransaction();
-		 tran.setTransaction_date("31/1/2019");
+		 tran.setTransaction_date(DataUtils.getDataDiferencaDias(2));
 		 
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
 	       .body(tran)
 		.when()
 		   .put("/transacoes")
@@ -147,11 +143,11 @@ public class BellyTests extends BaseTest {
 	 
 	 
 	 @Test
-		public void shouldNotRemoceAccountWithTransactions() {
+		public void t08_shouldNotRemoceAccountWithTransactions() {
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
+	       .pathParam("id", CONTA_ID)
 		.when()
-		   .delete("/contas/1785")
+		   .delete("/contas/{id}")
 		.then()
 		   .statusCode(500)
 		   .body("constraint", is("transacoes_conta_id_foreign"))
@@ -159,38 +155,51 @@ public class BellyTests extends BaseTest {
 	}
 	 
 	 @Test
-		public void shouldCalculateAccountBalance() {
+		public void t09_shouldCalculateAccountBalance() {
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
 		.when()
 		   .get("/saldo")
 		.then()
 		   .statusCode(200)
-		   .body("find{it.conta_id == 17585}.saldo", is("100.00"))
+		   .body("find{it.conta_id == "+CONTA_ID+"}.saldo", is("100.00"))
 		;
 	}
 	 
 	 @Test
-		public void shouldRemoveAccountTransaction() {
+		public void t10_shouldRemoveAccountTransaction() {
 	     given()
-	       .header("Authorization", "JWT" + TOKEN)
+	       .pathParam("id", MOV_ID)
 		.when()
-		   .delete("/transacoes/11588")
+		   .delete("/transacoes/{id}")
 		.then()
 		   .statusCode(204)
 		   
 		;
 	}
 	 
+		@Test
+		public void t01_shouldntAcessAPIWithoutToken() {
+			FilterableRequestSpecification req = (FilterableRequestSpecification) RestAssured.requestSpecification;
+			req.removeHeader("Authorization");
+			
+			given()
+			.when()
+			   .get("/addconta")
+			.then()
+			   .statusCode(401)
+			;
+			
+		}
+	 
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
-		 tran.setAccount_id(17585);
+		 tran.setAccount_id(CONTA_ID);
 		 //tran.setUser_id(user_id);
 		 tran.setDescription("Description Transaction");
 		 tran.setInvolved("Envolved Trasaction");
 		 tran.setType("REC");
-		 tran.setTransaction_date("01/01/2020");
-		 tran.setPayment_date("10/06/2020");
+		 tran.setTransaction_date(DataUtils.getDataDiferencaDias(-1));
+		 tran.setPayment_date(DataUtils.getDataDiferencaDias(5));
 		 tran.setValue(100f);
 		 tran.setStatus(true);
 		 return tran;
