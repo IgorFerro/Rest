@@ -145,6 +145,19 @@ public class BellyTests extends BaseTest {
 		;
 	}
 	 
+	 
+	 @Test
+		public void shouldNotRemoceAccountWithTransactions() {
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+		.when()
+		   .delete("/contas/1785")
+		.then()
+		   .statusCode(500)
+		   .body("constraint", is("transacoes_conta_id_foreign"))
+		;
+	}
+	 
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
 		 tran.setAccount_id(17585);
