@@ -170,6 +170,18 @@ public class BellyTests extends BaseTest {
 		;
 	}
 	 
+	 @Test
+		public void shouldRemoveAccountTransaction() {
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+		.when()
+		   .delete("/transacoes/11588")
+		.then()
+		   .statusCode(204)
+		   
+		;
+	}
+	 
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
 		 tran.setAccount_id(17585);
