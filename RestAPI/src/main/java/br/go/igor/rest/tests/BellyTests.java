@@ -177,7 +177,7 @@ public class BellyTests extends BaseTest {
 	}
 	 
 		@Test
-		public void t01_shouldntAcessAPIWithoutToken() {
+		public void t011_shouldntAcessAPIWithoutToken() {
 			FilterableRequestSpecification req = (FilterableRequestSpecification) RestAssured.requestSpecification;
 			req.removeHeader("Authorization");
 			
