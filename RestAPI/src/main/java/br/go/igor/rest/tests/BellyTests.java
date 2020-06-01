@@ -158,6 +158,18 @@ public class BellyTests extends BaseTest {
 		;
 	}
 	 
+	 @Test
+		public void shouldCalculateAccountBalance() {
+	     given()
+	       .header("Authorization", "JWT" + TOKEN)
+		.when()
+		   .get("/saldo")
+		.then()
+		   .statusCode(200)
+		   .body("find{it.conta_id == 17585}.saldo", is("100.00"))
+		;
+	}
+	 
 	 private Transactions getValidTransaction() {
 		 Transactions tran = new Transactions();
 		 tran.setAccount_id(17585);
